@@ -1,0 +1,28 @@
+{
+  "name": "daikin-aircon-jslib",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/viatsyshyn/daikin-aircon-jslib.git"
+  },
+  "keywords": [
+    "sdk",
+    "daikin",
+    "unofficial"
+  ],
+  "author": "Volodymyr Iatsyshyn <viatsyshyn@gmail.com>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/viatsyshyn/daikin-aircon-jslib/issues"
+  },
+  "homepage": "https://github.com/viatsyshyn/daikin-aircon-jslib#readme",
+  "dependencies": {
+    "debug": "^2.6.3",
+    "request": "^2.81.0"
+  }
+}
