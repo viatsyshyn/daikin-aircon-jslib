@@ -16,7 +16,7 @@
     "unofficial"
   ],
   "author": "Volodymyr Iatsyshyn <viatsyshyn@gmail.com>",
-  "license": "ISC",
+  "license": "APACHE",
   "bugs": {
     "url": "https://github.com/viatsyshyn/daikin-aircon-jslib/issues"
   },
