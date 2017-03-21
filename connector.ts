@@ -36,13 +36,14 @@ export interface IControlInfo {
 
 export interface ISensorInfo {
     htemp: number,
-    otemp: number
+    otemp: number,
+    hhum: number
 }
 
 export class Aircon {
     public constructor(private host: string) {}
 
-    public reboot(): Promise<void> {
+    public reboot(): Promise {
         return this
             .send_request('GET', '/common/reboot');
     }
@@ -64,7 +65,7 @@ export class Aircon {
             .then(parse_control_info);
     }
 
-    public set_control_info(params: IControlInfo) {
+    public set_control_info(params: IControlInfo): Promise {
         params = format_control_info(params);
         return this
             .get_raw_control_info()
@@ -155,7 +156,7 @@ const FORMATTER = {
     default: x => x
 };
 
-function parse_data(x, formats) {
+function parse_data<T>(x, formats: Map<string, string[]>): T {
     Object.keys(formats).forEach(function (format) {
         const lambda = PARSER[format] || PARSER.default;
         formats[format].forEach(prop => x[prop] = lambda(x[prop]));
@@ -164,7 +165,7 @@ function parse_data(x, formats) {
     return x;
 }
 
-function format_data(x, formats) {
+function format_data<T>(x: T, formats: Map<string, string[]>) {
     Object.keys(formats).forEach(function (format) {
         const lambda = FORMATTER[format] || FORMATTER.default;
         formats[format]
@@ -175,17 +176,17 @@ function format_data(x, formats) {
     return x;
 }
 
-function parse_basic_info(x) {
+function parse_basic_info(x): IGeneralInfo {
     const integers = ['port', 'err', 'pv'];
     const booleans = ['pow', 'led'];
     x['name'] = decodeURI(x['name']);
-    return parse_data(x, {int: integers, bool: booleans});
+    return parse_data<IGeneralInfo>(x, {int: integers, bool: booleans});
 }
 
-function parse_sensor_info(x) {
+function parse_sensor_info(x): ISensorInfo {
     const integers = ['err'];
     const temps = ['hhum', 'htemp', 'otemp'];
-    return parse_data(x, {int: integers, temperature: temps});
+    return parse_data<ISensorInfo>(x, {int: integers, temperature: temps});
 }
 
 const ctrl_formats = {
@@ -194,10 +195,10 @@ const ctrl_formats = {
     bool: ['pow']
 };
 
-function parse_control_info(x) {
-    return parse_data(x, ctrl_formats);
+function parse_control_info(x): IControlInfo {
+    return parse_data<IControlInfo>(x, ctrl_formats);
 }
 
-function format_control_info(x) {
-    return format_data(x, ctrl_formats);
+function format_control_info(x: IControlInfo) {
+    return format_data<IControlInfo>(x, ctrl_formats);
 }
