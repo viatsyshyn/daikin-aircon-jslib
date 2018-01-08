@@ -43,7 +43,7 @@ export interface ISensorInfo {
 export class Aircon {
     public constructor(private host: string) {}
 
-    public reboot(): Promise {
+    public reboot(): Promise<void> {
         return this
             .send_request('GET', '/common/reboot');
     }
@@ -65,44 +65,46 @@ export class Aircon {
             .then(parse_control_info);
     }
 
-    public set_control_info(params: IControlInfo): Promise {
+    public set_control_info(params: IControlInfo): Promise<void> {
         params = format_control_info(params);
         return this
             .get_raw_control_info()
-            .then(current => {
-                let minimal_state = {};
+            .then((current: any) => {
+                let minimal_state: any = {};
                 ['pow', 'mode', 'stemp', 'shum', 'f_rate', 'f_dir']
                     .forEach(x => minimal_state[x] = current[x]);
 
-                return Object.assign(minimal_state, params);
+                return (<any>Object).assign(minimal_state, params);
             })
             .then(params =>
                 this.send_request('GET', '/aircon/set_control_info', params));
     }
 
-    private get_raw_control_info(): Promise {
+    private get_raw_control_info(): Promise<void> {
         return this.send_request('GET', '/aircon/get_control_info');
     }
 
-    private send_request(method, url, params = null, headers = null): Promise {
-        if (this.host == null || this.host === '')
+    private send_request<T = any>(method: string, url: string, params: any = null, headers: any = null): Promise<T> {
+        if (this.host == null || this.host === '') {
             throw new Error('Host is required');
+        }
 
-        if (method !== 'GET')
+        if (method !== 'GET') {
             throw new Error(`Target method ${method} is not implemented`);
+        }
 
-        logger.log('REQUEST', method, url);
+        logger.log('REQUEST', method, url, params);
 
         return new Promise((resolve, reject) => {
                 request.get({
                     uri: `http://${this.host}${url}`,
                     headers: headers,
                     qs: params
-                }, (err, resp, data) => {
+                }, (err: any, resp: any, data: string) => {
                     err ? reject(err): resolve(data);
                 });
             })
-            .then(response => {
+            .then((response: string) => {
                 logger.log('REQUEST', method, url, response);
 
                 /*
@@ -124,7 +126,7 @@ export class Aircon {
                     throw new Error(`Unrecognized return message: '${ret_msg}'`);
                 }
 
-                const r = {};
+                const r: any = {};
                 rsp
                     // Remove the standard prefix
                     .slice(1)
@@ -137,53 +139,55 @@ export class Aircon {
 
                 //logger.log('PROCESSED', r);
 
-                return r;
+                return r as T;
             });
     }
 }
 
 const PARSER = {
-    int: x => x == null ? 0 : parseInt(x, 10),
-    temperature: x => x == null || x === '-' || x === '--' ? null : parseFloat(x),
-    bool: x => x === 'true' || x === 1 || x === true,
-    default: x => x
+    int: (x: null | string | number) => x == null ? 0 : parseInt(''+x, 10),
+    temperature: (x: null | string) => x == null || x === '-' || x === '--' ? null : parseFloat(x),
+    bool: (x: null | string | number | boolean)  => x === 'true' || x === 1 || x === true,
+    default: (x: any)  => x
 };
 
 const FORMATTER = {
-    int: x => '' + PARSER.int(x),
-    temperature: x => '' + PARSER.temperature(x),
-    bool: x => PARSER.bool(x) ? '1' : '0',
-    default: x => x
+    int: (x: number) => '' + PARSER.int(x),
+    temperature: (x: string) => '' + PARSER.temperature(x),
+    bool: (x: boolean) => PARSER.bool(x) ? '1' : '0',
+    default: (x: any) => x
 };
 
-function parse_data<T>(x, formats: Map<string, string[]>): T {
-    Object.keys(formats).forEach(function (format) {
+type Format = 'int' | 'temperature' | 'bool' | 'default';
+
+function parse_data<T>(x: any, formats: any): T {
+    Object.keys(formats).forEach((format: Format) => {
         const lambda = PARSER[format] || PARSER.default;
-        formats[format].forEach(prop => x[prop] = lambda(x[prop]));
+        formats[format].forEach((prop: string) => x[prop] = lambda(x[prop]));
     });
 
-    return x;
+    return x as T;
 }
 
-function format_data<T>(x: T, formats: Map<string, string[]>) {
-    Object.keys(formats).forEach(function (format) {
+function format_data<T>(x: any, formats: any) {
+    Object.keys(formats).forEach((format: Format) => {
         const lambda = FORMATTER[format] || FORMATTER.default;
         formats[format]
-            .filter(prop => x[prop] != null)
-            .forEach(prop => x[prop] = lambda(x[prop]));
+            .filter((prop: string) => x[prop] != null)
+            .forEach((prop: string) => x[prop] = lambda(x[prop]));
     });
 
-    return x;
+    return x as T;
 }
 
-function parse_basic_info(x): IGeneralInfo {
+function parse_basic_info(x: any): IGeneralInfo {
     const integers = ['port', 'err', 'pv'];
     const booleans = ['pow', 'led'];
     x['name'] = decodeURI(x['name']);
     return parse_data<IGeneralInfo>(x, {int: integers, bool: booleans});
 }
 
-function parse_sensor_info(x): ISensorInfo {
+function parse_sensor_info(x: any): ISensorInfo {
     const integers = ['err'];
     const temps = ['hhum', 'htemp', 'otemp'];
     return parse_data<ISensorInfo>(x, {int: integers, temperature: temps});
@@ -195,10 +199,10 @@ const ctrl_formats = {
     bool: ['pow']
 };
 
-function parse_control_info(x): IControlInfo {
+function parse_control_info(x: any): IControlInfo {
     return parse_data<IControlInfo>(x, ctrl_formats);
 }
 
-function format_control_info(x: IControlInfo) {
+function format_control_info(x: IControlInfo): IControlInfo {
     return format_data<IControlInfo>(x, ctrl_formats);
 }

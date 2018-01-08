@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "postinstall": "node ./node_modules/bin/tsc index.ts"
+    "prebuild": "tslint index.ts",
+    "build": "tsc",
+    "postinstall": "postinstall-build ."
   },
   "repository": {
     "type": "git",
@@ -22,10 +24,14 @@
   },
   "homepage": "https://github.com/viatsyshyn/daikin-aircon-jslib#readme",
   "dependencies": {
-    "debug": "^2.6.3",
-    "request": "^2.81.0"
+    "debug": "^2.6.9",
+    "postinstall-build": "^5.0.1",
+    "request": "^2.83.0"
   },
   "devDependencies": {
-    "typescript": "^2.2.1"
+    "@types/debug": "0.0.30",
+    "@types/request": "^2.0.9",
+    "tslint": "^5.8.0",
+    "typescript": "^2.6.2"
   }
 }
